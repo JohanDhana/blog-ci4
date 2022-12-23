@@ -90,7 +90,7 @@
                   <?php } ?>
                 </div>
                 <?php if ($post->sub) { ?>
-                  <div class="collapse <?php if (in_array($this->uri->segment('2'), array_column($post->sub, 'slug'))) echo 'show'; ?>" id="collapseExample<?= $post->id ?>">
+                  <div class="collapse <?php if (in_array(current_url(true)->getSegment('2'), array_column($post->sub, 'slug'))) echo 'show'; ?>" id="collapseExample<?= $post->id ?>">
                     <div class="py-2 ps-3">
                       <ul class="list-unstyled fw-normal">
                         <?php foreach ($post->sub as $sub_post) : ?>

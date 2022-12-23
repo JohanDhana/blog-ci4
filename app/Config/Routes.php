@@ -35,8 +35,18 @@ $routes->set404Override();
 
 // We get a performance increase by specifying the default
 // route since we don't have to scan directories.
-$routes->get('/', 'Home::index');
-
+$routes->get('/', 'PostController::index');
+$routes->get('posts/create', 'PostController::create');
+$routes->get('posts/list', 'PostController::list');
+$routes->get('posts/search', 'PostController::public_post_search');
+$routes->get('post/(:segment)', 'PostController::view/$1');
+$routes->get('posts', 'PostController::public_post_list');
+$routes->get('users/reset-password', 'users/reset_password');
+$routes->get('categories', 'Categories::index');
+$routes->get('categories/create', 'Categories::create');
+$routes->get('categories/list', 'Categories::list');
+$routes->get('categories/(:segment)/posts', 'PostController::posts_by_category/$1');
+// $routes('(:segment)', 'pages/view/)$1');
 /*
  * --------------------------------------------------------------------
  * Additional Routing

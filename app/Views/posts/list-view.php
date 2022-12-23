@@ -9,7 +9,7 @@
                     <div class="card-body">
                         <h3 class="card-title"><?= $post['title'] ?></h3>
                         <p><?= substr(strip_tags($post['body']), 0, 70)  ?></p>
-                        <p class="card-text"><small class="text-muted"><?= strftime( "%a %d %b %Y", strtotime($post['created_at'])) ?></small></p>
+                        <p class="card-text"><small class="text-muted"><?= $post['created_at'] ?></small></p>
                     </div>
                 </div>
             </a>
@@ -19,6 +19,5 @@
 
 <div class="row">
     <div class="col-md-12 d-flex justify-content-center py-4">
-        <?= $links ?>
     </div>
 </div>

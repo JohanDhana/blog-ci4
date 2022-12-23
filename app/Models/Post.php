@@ -1,22 +1,56 @@
 <?php
-namespace App\Models; 
+
+namespace App\Models;
 
 use CodeIgniter\Model;
- 
-class Post_model extends Model
+
+class Post extends Model
 {
-	public function __construct()
-	{
-		$this->load->database();
-	}
+
+	protected $DBGroup          = 'default';
+	protected $table            = 'posts';
+	protected $primaryKey       = 'id';
+	protected $useAutoIncrement = true;
+	protected $insertID         = 0;
+	protected $returnType       = 'array';
+	protected $useSoftDeletes   = false;
+	protected $protectFields    = true;
+	protected $allowedFields    = ['title', 'slug', 'image', 'content', 'seo_title', 'seo_description',];
+
+	// Dates
+	protected $useTimestamps = false;
+	protected $dateFormat    = 'datetime';
+	protected $createdField  = 'created_at';
+	protected $updatedField  = 'updated_at';
+	protected $deletedField  = 'deleted_at';
+
+	// Validation
+	protected $validationRules      =    ['title' => 'required', 'content' => 'required',];
+	protected $validationMessages   = [];
+	protected $skipValidation       = false;
+	protected $cleanValidationRules = true;
+
+	// Callbacks
+	protected $allowCallbacks = true;
+	protected $beforeInsert   = [];
+	protected $afterInsert    = [];
+	protected $beforeUpdate   = [];
+	protected $afterUpdate    = [];
+	protected $beforeFind     = [];
+	protected $afterFind      = [];
+	protected $beforeDelete   = [];
+	protected $afterDelete    = [];
+
 
 	public function count_posts()
 	{
-		return	$this->db->count_all_results('posts');
+		$builder  = $this->db->table('posts');
+		return	$builder->countAllResults();
 	}
 
 	public function count_posts_by_category($slug)
 	{
+
 
 		$query = $this->db->query('SELECT count(*) as count
 		FROM posts p
@@ -27,42 +61,41 @@ class Post_model extends Model
 		  FROM post_categories pc 
 		  JOIN categories c ON pc.category_id = c.id
 		  WHERE c.slug = "' . $slug . '")  GROUP BY p.id');
-		return $query->result_array()[0]['count'];
+		return $query->getRow()[0]['count'];
 	}
 
 	public function count_posts_searched()
 	{
+		$builder  = $this->db->table('posts');
+
 		$query = $this->input->get('search_query');
 
-		$this->db->or_like('title', $query);
-		$this->db->or_like('body', $query);
-		return	$this->db->count_all_results('posts');
+		$builder->orLike('title', $query);
+		$builder->orLike('body', $query);
+		return	$builder->countAllResults();
 	}
 
 
-	public function get_posts($limit = FALSE, $offset = FALSE)
-	{
-		if ($limit) {
-			$this->db->limit($limit, $offset);
-		}
-		$query = $this->db->get('posts');
-		return $query->result_array();
-	}
+
 
 	public function search_posts($limit = FALSE, $offset = FALSE)
 	{
+		$builder  = $this->db->table('posts');
+
 		$query = $this->input->get('search_query');
 		if ($limit) {
-			$this->db->limit($limit, $offset);
+			$builder->limit($limit, $offset);
 		}
-		$this->db->or_like('title', $query);
-		$this->db->or_like('body', $query);
-		$query = $this->db->get('posts');
-		return $query->result_array();
+		$builder->orLike('title', $query);
+		$builder->orLike('body', $query);
+		$query = $builder->get('posts');
+		return $query->getResultArray();
 	}
 
 	public function create_post($icon, $image,	$categories)
 	{
+		$builder  = $this->db->table('posts');
+
 		$slug = url_title($this->input->post('title'), '-', TRUE);
 		$on_homepage = $this->input->post('on_homepage') === 'on' ? 1 : 0;
 		$slug_results =	$this->check_unique_slug(null, $slug);
@@ -86,13 +119,15 @@ class Post_model extends Model
 				$data['seo_schema'] = $this->input->post('seo_schema');
 			}
 
-			$insrt = $this->db->insert('posts', $data);
+			$insrt = $builder->insert($data);
 			$post_id = $this->get_posts_by_slug($slug)['id'];
 			$post_category = array();
 			foreach ($categories as $value) {
 				array_push($post_category, ['post_id' => $post_id, 'category_id' => $value]);
 			}
-			$this->db->insert_batch('post_categories', $post_category);
+			$builderPC  = $this->db->table('post_categories');
+
+			$builderPC->insertBatch($post_category);
 			return $insrt;
 		} else {
 			$this->session->set_flashdata('bad_request', 'A page with this title already exist');
@@ -101,16 +136,18 @@ class Post_model extends Model
 
 	public function delete_post($id)
 	{
-		$image_file_name = $this->db->select('post_image')->get_where('posts', array('id' => $id))->row()->post_image;
-		$icon_file_name = $this->db->select('post_icon')->get_where('posts', array('id' => $id))->row()->post_icon;
+		$builder  = $this->db->table('posts');
+
+		$image_file_name = $builder->select('post_image')->getWhere(array('id' => $id))->getRow()->post_image;
+		$icon_file_name = $builder->select('post_icon')->getWhere(array('id' => $id))->getRow()->post_icon;
 		$cwd = getcwd(); // save the current working directory
 		$image_file_path = $cwd . "\\assets\\images\\posts\\";
 		chdir($image_file_path);
 		unlink($image_file_name);
 		unlink($icon_file_name);
 		chdir($cwd); // Restore the previous working directory
-		$this->db->where('id', $id);
-		$this->db->delete('posts');
+		$builder->where('id', $id);
+		$builder->delete('posts');
 		return true;
 	}
 
@@ -140,15 +177,17 @@ class Post_model extends Model
 			$data['post_image'] = $image;
 		}
 
+		$builder  = $this->db->table('posts');
+		$update = $builder->update($data, ['id' => $id]);
+		$builderPC  = $this->db->table('post_categories');
 
-		$update = $this->db->update('posts', $data, ['id' => $id]);
-		$this->db->delete('post_categories', ['post_id' => $id]);
+		$builderPC->delete(['post_id' => $id]);
 		if ($categories) {
 			$post_category = array();
 			foreach ($categories as $category_id) {
 				array_push($post_category, array('post_id' => $id, 'category_id' => $category_id));
 			}
-			$this->db->insert_batch('post_categories', $post_category);
+			$builderPC->insertBatch($post_category);
 		}
 
 		return $update;
@@ -156,9 +195,10 @@ class Post_model extends Model
 
 	public function get_categories()
 	{
-		$this->db->order_by('name');
-		$query = $this->db->get('categories');
-		return $query->result_array();
+		$builder  = $this->db->table('posts');
+		$builder->orderBy('name');
+		$query = $builder->get('categories');
+		return $query->resultArray;
 	}
 
 	public function posts_by_category($category_slug)
@@ -173,62 +213,61 @@ class Post_model extends Model
 		  FROM post_categories pc 
 		  JOIN categories c ON pc.category_id = c.id
 		  WHERE c.slug = "' . $category_slug . '")  GROUP BY p.id');
-		return $query->result_array();
+		return $query->resultArray;
 	}
 
-	public function get_posts_by_id($id)
-	{
-		$query = $this->db->get_where('posts', array('id' => $id));
-		return $query->row_array();
-	}
 
 	public function get_posts_by_id_with_categories($id)
 	{
+
 		$query = $this->db->query('SELECT pc.post_id AS `post_id`, c.name AS `category_name`,c.id as `category_id` 
 		FROM post_categories AS pc
 		INNER JOIN categories  AS c ON pc.category_id = c.id where pc.post_id=' . $id);
-		return $query->result_array();
+		return $query->resultArray;
 	}
 
 
 	public function get_posts_by_slug($slug)
 	{
-		$query = $this->db->get_where('posts', array('slug' => $slug));
-		return $query->row_array();
+		$builder  = $this->db->table('posts');
+		$query = $builder->getWhere(array('slug' => $slug));
+		return $query->getRowArray();
 	}
 
-	function check_unique_slug($id = '', $slug)
+	function check_unique_slug($id, $slug)
 	{
-		$this->db->where('slug', $slug);
+		$builder  = $this->db->table('posts');
+
+		$builder->where('slug', $slug);
 
 		if ($id) {
-			$this->db->where_not_in('id', $id);
+			$builder->whereNotIn('id', $id);
 		}
-		return $this->db->get('posts')->num_rows();
+		return $builder->get('posts');
 	}
 
 
 	public function  get_posts_count_with_parent($parent_id)
 	{
-		$this->db->where('parent', $parent_id);
-		$this->db->from('posts');
-		return $this->db->count_all_results();
+		$builder  = $this->db->table('posts');
+		$builder->where('parent', $parent_id);
+		$builder->from('posts');
+		return $builder->countAllResults();
 	}
 
 	public function get_posts_nested($limit = FALSE, $offset = FALSE)
 	{
-
-		$this->db->select('*');
-		$this->db->from('posts');
-		$this->db->where('parent is  NULL', NULL, FALSE);
-		$this->db->where('on_homepage', 1);
+		$builder  = $this->db->table('posts');
+		$builder->select('*');
+		$builder->where('parent is  NULL', NULL, FALSE);
+		$builder->where('on_homepage', 1);
 
 		if ($limit) {
-			$this->db->limit($limit, $offset);
+			$builder->limit($limit, $offset);
 		}
-		$parent = $this->db->get();
+		$parent = $builder->get();
 
-		$posts = $parent->result();
+		$posts = $parent->getResult();
 		$i = 0;
 		foreach ($posts as $main_post) {
 
@@ -240,13 +279,13 @@ class Post_model extends Model
 
 	public function sub_post($id)
 	{
+		$builder  = $this->db->table('posts');
 
-		$this->db->select('*');
-		$this->db->from('posts');
-		$this->db->where('parent', $id);
+		$builder->select('*');
+		$builder->where('parent', $id);
 
-		$child = $this->db->get();
-		$categories = $child->result();
+		$child = $builder->get();
+		$categories = $child->getResult();
 		$i = 0;
 		foreach ($categories as $sub_post) {
 

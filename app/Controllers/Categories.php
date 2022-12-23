@@ -1,28 +1,26 @@
 <?php
+
 namespace App\Controllers;
+
+use App\Models\Post;
+use App\Models\Category;
+
 class Categories extends BaseController
 {
-
-	public function __construct()
-	{
-		parent::__construct();
-
-		$this->load->helper('utils');
-	}
-
-
 	public function index()
 	{
 		$data['title'] = 'Categories';
 		$data['seo_title'] = 'Categories';
 		$data['seo_desc'] = 'Categories';
 		$data['tags'] = [];
-		$data['posts'] =  $this->post_model->get_posts_nested(10, 0);
-		$data['categories'] = $this->category_model->get_categories();
+		$post_model = new Post();
+		$category = new Category();
+		$data['posts'] =  $post_model->get_posts_nested(10, 0);
+		$data['categories'] = $category->paginate(25);
 
-		$this->load->view('templates/header', $data);
-		$this->load->view('categories', $data);
-		$this->load->view('templates/footer');
+		return view('templates/header', $data)
+			. view('categories', $data)
+			. view('templates/footer');
 	}
 
 	public function create()

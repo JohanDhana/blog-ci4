@@ -1,69 +1,73 @@
 <?php
+
 namespace App\Controllers;
-class Posts extends BaseController
+
+use App\Models\Category;
+use App\Models\Post;
+
+class PostController extends BaseController
 {
 
 	public function __construct()
 	{
-		parent::__construct();
-
-		$this->load->helper('utils');
+		helper('utils');
 	}
 
 	public function index()
 	{
 		$data['tags'] = [];
-
+		$post = new Post();
 		$data['title'] = 'Latest Posts';
 		$data['seo_title'] = 'Home';
 		$data['seo_desc'] = '';
-		$data['posts'] =  $this->post_model->get_posts_nested(10, 0);
+		$data['posts'] =  $post->get_posts_nested(10, 0);
 		$data['title'] = '';
 
-		$this->load->view('templates/header', $data);
-		$this->load->view('pages/home', $data);
-		$this->load->view('templates/footer');
+		return view('templates/header', $data) .
+			view('pages/home', $data) .
+			view('templates/footer');
 	}
 
 	public function view($slug)
 	{
-		$data['post'] = $this->post_model->get_posts_by_slug($slug);
-		$data['posts'] = $this->post_model->get_posts_nested();
-		$data['tags'] = explode(',', $data['post']['tags']);
+		$post = new Post();
+
+		$data['post'] = $post->get_posts_by_slug($slug);
+		$data['posts'] = $post->get_posts_nested();
+		$data['tags'] = explode(',', $data['post']['tags'] || '');
 
 		if (empty($data['post'])) {
-			show_404();
+			throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
 		}
 
 		$data['title'] = '';
 		$data['seo_title'] = $data['post']['seo_title'];
 		$data['seo_desc'] = $data['post']['seo_description'];
 
-		$this->load->view('templates/header', $data);
-		$this->load->view('posts/view', $data);
-		$this->load->view('templates/footer');
+		return	view('templates/header', $data) .
+			view('posts/view', $data) .
+			view('templates/footer');
 	}
 
 	public function list()
 	{
 		$this->user_model->check_login();
-		$config = get_pagination_config();
 		$config["base_url"] = base_url() . "posts/list";
 		$config["total_rows"] = $this->post_model->count_posts();
 		$this->pagination->initialize($config);
-		$offset = ($this->input->get('page')) ? (($this->input->get('page') - 1) * $config["per_page"]) : 0;
+		$offset = ($this->request->getVar('page')) ? (($this->request->getVar('page') - 1) * $config["per_page"]) : 0;
 		$data['limit'] = $config['per_page'];
 		$data['total'] = $config['total_rows'];
-		$data['page_nr'] = 	$this->input->get('page');
+		$data['page_nr'] = 	$this->request->getVar('page');
 		$data["links"] = $this->pagination->create_links();
 		$data['pages'] = $this->post_model->get_posts($config["per_page"], $offset);
 
 		$footer_data['script'] = null;
 		$data['title'] = 'Post List';
 
-		$this->load->view('templates/admin_header');
-		$this->load->view('admin/list_posts', $data);
-		$this->load->view('templates/admin_footer',	$footer_data);
+		view('templates/admin_header');
+		view('admin/list_posts', $data);
+		view('templates/admin_footer',	$footer_data);
 	}
 
 
@@ -74,44 +78,40 @@ class Posts extends BaseController
 		$data['seo_desc'] = '';
 		$data['tags'] = [];
 		$data['posts'] =  $this->post_model->get_posts_nested(10, 0);
-		$config = get_pagination_config();
 		$config["base_url"] = base_url() . "posts/list";
 		$config["total_rows"] = $this->post_model->count_posts_by_category($category_slug);
 		$this->pagination->initialize($config);
-		$offset = ($this->input->get('page')) ? (($this->input->get('page') - 1) * $config["per_page"]) : 0;
+		$offset = ($this->request->getVar('page')) ? (($this->request->getVar('page') - 1) * $config["per_page"]) : 0;
 		$data['limit'] = $config['per_page'];
 		$data['total'] = $config['total_rows'];
-		$data['page_nr'] = 	$this->input->get('page');
+		$data['page_nr'] = 	$this->request->getVar('page');
 		$data["links"] = $this->pagination->create_links();
 		$data['posts_view'] = $this->post_model->posts_by_category($category_slug, $config["per_page"], $offset);
 
-		$this->load->view('templates/header', $data);
-		$this->load->view('posts/list-view', $data);
-		$this->load->view('templates/footer');
+		view('templates/header', $data);
+		view('posts/list-view', $data);
+		view('templates/footer');
 	}
 
 	public function public_post_list()
 	{
+		$post = new Post();
+
 		$data['title'] = 'Latest Posts';
 		$data['seo_title'] = 'Home';
 		$data['seo_desc'] = '';
 		$data['tags'] = [];
-		$data['posts'] =  $this->post_model->get_posts_nested(10, 0);
-		$config = get_pagination_config(6);
-		$config["base_url"] = base_url() . "posts";
-		$config["total_rows"] = $this->post_model->count_posts();
-		$this->pagination->initialize($config);
-		$offset = ($this->input->get('page')) ? (($this->input->get('page') - 1) * $config["per_page"]) : 0;
-		$data['limit'] = $config['per_page'];
-		$data['total'] = $config['total_rows'];
-		$data['page_nr'] = 	$this->input->get('page');
-		$data["links"] = $this->pagination->create_links();
-		$data['posts_view'] = $this->post_model->get_posts($config["per_page"], $offset);
+		$data['posts'] =  $post->get_posts_nested(10, 0);
+		$config["per_page"] = 20;
+		$config["total_rows"] = $post->count_posts();
+		$offset = ($this->request->getVar('page')) ? (($this->request->getVar('page') - 1) * $config["per_page"]) : 0;
+		$data['page_nr'] = 	$this->request->getVar('page');
+		$data['posts_view'] = $post->select()->paginate($config['per_page']);
 		$data['title'] = '';
 
-		$this->load->view('templates/header', $data);
-		$this->load->view('posts/list-view', $data);
-		$this->load->view('templates/footer');
+		return view('templates/header', $data) .
+			view('posts/list-view', $data) .
+			view('templates/footer');
 	}
 
 
@@ -122,21 +122,20 @@ class Posts extends BaseController
 		$data['seo_desc'] = '';
 		$data['tags'] = [];
 		$data['posts'] =  $this->post_model->get_posts_nested(10, 0);
-		$config = get_pagination_config(6);
 		$config["base_url"] = base_url() . "posts";
 		$config["total_rows"] = $this->post_model->count_posts_searched();
 		$this->pagination->initialize($config);
-		$offset = ($this->input->get('page')) ? (($this->input->get('page') - 1) * $config["per_page"]) : 0;
+		$offset = ($this->request->getVar('page')) ? (($this->request->getVar('page') - 1) * $config["per_page"]) : 0;
 		$data['limit'] = $config['per_page'];
 		$data['total'] = $config['total_rows'];
-		$data['page_nr'] = 	$this->input->get('page');
+		$data['page_nr'] = 	$this->request->getVar('page');
 		$data["links"] = $this->pagination->create_links();
 		$data['posts_view'] = $this->post_model->search_posts($config["per_page"], $offset);
 		$data['title'] = '';
 		$r = $this->db->last_query();
-		$this->load->view('templates/header', $data);
-		$this->load->view('posts/list-view', $data);
-		$this->load->view('templates/footer');
+		view('templates/header', $data);
+		view('posts/list-view', $data);
+		view('templates/footer');
 	}
 
 	public function create()
@@ -153,9 +152,9 @@ class Posts extends BaseController
 
 		if ($this->form_validation->run() === FALSE) {
 			$footer_data['script'] = null;
-			$this->load->view('templates/admin_header');
-			$this->load->view('admin/create_post', $data);
-			$this->load->view('templates/admin_footer', $footer_data);
+			view('templates/admin_header');
+			view('admin/create_post', $data);
+			view('templates/admin_footer', $footer_data);
 		} else {
 			// Upload Image
 			$post_icon = $this->upload_images('post_icon');
@@ -209,9 +208,9 @@ class Posts extends BaseController
 				array_push($data['categories'], $category);
 			}
 			$footer_data['script'] = null;
-			$this->load->view('templates/admin_header');
-			$this->load->view('admin/update_post', $data);
-			$this->load->view('templates/admin_footer',	$footer_data);
+			view('templates/admin_header');
+			view('admin/update_post', $data);
+			view('templates/admin_footer',	$footer_data);
 		} else {
 
 			// Upload Image

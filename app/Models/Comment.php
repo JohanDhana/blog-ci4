@@ -3,7 +3,7 @@ namespace App\Models;
 
 use CodeIgniter\Model;
  
-	class Comment_model extends Model{
+	class Comment extends Model{
 		public function __construct(){
 			$this->load->database();
 		}
