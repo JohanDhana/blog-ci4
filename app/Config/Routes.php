@@ -37,15 +37,21 @@ $routes->set404Override();
 // route since we don't have to scan directories.
 $routes->get('/', 'PostController::index');
 $routes->get('posts/create', 'PostController::create');
-$routes->get('posts/list', 'PostController::list');
+$routes->get('posts/list', 'PostController::list',);
 $routes->get('posts/search', 'PostController::public_post_search');
 $routes->get('post/(:segment)', 'PostController::view/$1');
 $routes->get('posts', 'PostController::public_post_list');
 $routes->get('users/reset-password', 'users/reset_password');
+
 $routes->get('categories', 'Categories::index');
-$routes->get('categories/create', 'Categories::create');
-$routes->get('categories/list', 'Categories::list');
+$routes->get('categories/create', 'Categories::createView');
+$routes->post('categories/create', 'Categories::create');
+$routes->get('categories/update/(:segment)', 'Categories::updateView/$1', ['as' => 'categoryUpdateView']);
+$routes->post('categories/update/(:segment)', 'Categories::update/$1');
+$routes->get('categories/list', 'Categories::list', ['as' => 'categoryList']);
 $routes->get('categories/(:segment)/posts', 'PostController::posts_by_category/$1');
+$routes->get('categories/delete/(:num)', 'Categories::delete/$1', ['as' => 'categoryDelete']);
+
 // $routes('(:segment)', 'pages/view/)$1');
 /*
  * --------------------------------------------------------------------

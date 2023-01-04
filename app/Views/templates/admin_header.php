@@ -1,13 +1,16 @@
+<?php $session = \Config\Services::session(); ?>
+
+
 <html>
 
 <head>
     <title>EasySchema Dashboard</title>
     <!-- CSS files -->
-    <link href="<?php echo base_url(); ?>assets/css/tabler.min.css" rel="stylesheet" />
-    <link href="<?php echo base_url(); ?>assets/css/tabler-flags.min.css" rel="stylesheet" />
-    <link href="<?php echo base_url(); ?>assets/css/tabler-payments.min.css" rel="stylesheet" />
-    <link href="<?php echo base_url(); ?>assets/css/tabler-vendors.min.css" rel="stylesheet" />
-    <link href="<?php echo base_url(); ?>assets/css/demo.min.css" rel="stylesheet" />
+    <link href="<?= base_url(); ?>/assets/css/tabler.min.css" rel="stylesheet" />
+    <link href="<?= base_url(); ?>/assets/css/tabler-flags.min.css" rel="stylesheet" />
+    <link href="<?= base_url(); ?>/assets/css/tabler-payments.min.css" rel="stylesheet" />
+    <link href="<?= base_url(); ?>/assets/css/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="<?= base_url(); ?>/assets/css/demo.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
     <link rel="icon" href="https://easyschema.com/Components/Assets/images/logo_ico.jpg" sizes="32x32" type="image/png" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.13.3/css/selectize.min.css" integrity="sha512-bkB9w//jjNUnYbUpATZQCJu2khobZXvLP5GZ8jhltg7P/dghIrTaSJ7B/zdlBUT0W/LXGZ7FfCIqNvXjWKqCYA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -105,7 +108,7 @@
                         <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown" aria-label="Open user menu" aria-expanded="false">
                             <span class="avatar avatar-sm" style="background-color: #fff;"> <img src="<?= base_url('assets/images/user-astronaut-solid.svg') ?>" alt="" srcset=""> </span>
                             <div class="d-none d-xl-block ps-2">
-                                <div><?= $this->session->userdata('username'); ?></div>
+                                <div><?= $session->get('username'); ?></div>
                                 <div class="mt-1 small text-muted">Admin</div>
                             </div>
                         </a>
@@ -121,26 +124,21 @@
 
     <div class="container-xl pt-2">
         <!-- Flash messages -->
-        <?php if ($this->session->flashdata('success')) : ?>
+        <?php if ($session->get('success')) : ?>
             <div class="alert alert-success" role="alert">
                 <h4 class="alert-title">Wow! Everything worked!</h4>
-                <div class="text-muted"><?= $this->session->flashdata('success') ?></div>
+                <div class="text-muted"><?= $session->get('success') ?></div>
             </div>
         <?php endif; ?>
 
-        <?php if ($this->session->flashdata('bad_request')) : ?>
+        <?php if ($session->get('bad_request')) : ?>
             <div class="alert alert-danger" role="alert">
                 <h4 class="alert-title">Error</h4>
-                <div class="text-muted"><?= $this->session->flashdata('bad_request') ?></div>
+                <div class="text-muted"><?= $session->get('bad_request') ?></div>
             </div>
         <?php endif; ?>
 
-        <?php if (validation_errors()) : ?>
-            <div class="alert alert-danger" role="alert">
-                <h4 class="alert-title">Error</h4>
-                <div class="text-muted"><?= validation_errors() ?></div>
-            </div>
-        <?php endif; ?>
+
         <!-- Flash messages -->
     </div>
 

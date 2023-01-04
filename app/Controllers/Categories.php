@@ -7,6 +7,11 @@ use App\Models\Category;
 
 class Categories extends BaseController
 {
+	public function __construct()
+	{
+		helper("form");
+	}
+
 	public function index()
 	{
 		$data['title'] = 'Categories';
@@ -23,83 +28,86 @@ class Categories extends BaseController
 			. view('templates/footer');
 	}
 
-	public function create()
+	public function createView()
 	{
 		$data['title'] = 'Create Category';
 
-		$this->form_validation->set_rules('name', 'Name', 'required');
+		$footer_data['script'] = null;
+		return	view('templates/admin_header')
+			. view('admin/categories/create', $data)
+			. view('templates/admin_footer',	$footer_data);
+	}
 
-		if ($this->form_validation->run() === FALSE) {
-			$footer_data['script'] = null;
-			$this->load->view('templates/admin_header');
-			$this->load->view('admin/categories/create', $data);
-			$this->load->view('templates/admin_footer',	$footer_data);
-		} else {
-			$this->category_model->create_category();
+	public function create()
+	{
+		$category = new Category();
+		$slug = url_title($this->request->getVar('name'), '-', TRUE);
 
-			// Set message
-			$this->session->set_flashdata('success', 'Your category has been created');
-
-			redirect('categories/list');
-		}
+		$data = array(
+			'name' => $this->request->getVar('name'),
+			'user_id' => session()->user_id,
+			'slug' => $slug
+		);
+		$category->insert($data);
+		return redirect()->route('categoryList');
 	}
 
 	public function list()
 	{
-		$this->user_model->check_login();
-		$config = get_pagination_config();
+		$category = new Category();
 		$config["base_url"] = base_url() . "categories/list";
-		$config["total_rows"] = $this->category_model->count_categories();
-		$this->pagination->initialize($config);
-		$offset = ($this->input->get('page')) ? (($this->input->get('page') - 1) * $config["per_page"]) : 0;
-		$data['limit'] = $config['per_page'];
+		$config["total_rows"] = $category->count_categories();
+		$offset = ($this->request->getVar('page')) ? (($this->request->getVar('page') - 1) * 20) : 0;
+		$data['limit'] = 20;
 		$data['total'] = $config['total_rows'];
-		$data['page_nr'] = 	$this->input->get('page');
-		$data["links"] = $this->pagination->create_links();
-		$data['categories'] = $this->category_model->get_categories($config["per_page"], $offset);
+		$data['page_nr'] = 	$this->request->getVar('page');
+		$data['categories'] = $category->paginate(20);
+		$data["pager"] = $category->pager;
 
 		$footer_data['script'] = null;
 		$data['title'] = 'Categories List';
 
-		$this->load->view('templates/admin_header');
-		$this->load->view('admin/categories/list', $data);
-		$this->load->view('templates/admin_footer',	$footer_data);
+		return	view('templates/admin_header') .
+			view('admin/categories/list', $data) .
+			view('templates/admin_footer',	$footer_data);
+	}
+
+	public function updateView($id)
+	{
+		$category = new Category();
+
+		$data['title'] = 'Update Category';
+		$data['category'] = $category->find($id);
+		if (empty($data['category'])) {
+			throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+		}
+		$footer_data['script'] = null;
+		return	view('templates/admin_header') .
+			view('admin/categories/update', $data) .
+			view('templates/admin_footer',	$footer_data);
 	}
 
 	public function update($id)
 	{
-		$this->user_model->check_login();
-		$data['title'] = 'Update Category';
+		$category = new Category();
+		$data = [
+			'name' => $this->request->getVar('name'),
+		];
+		$category->update($id, $data);
 
-		$this->form_validation->set_rules('name', 'Name', 'required');
+		// Set message
+		session()->setFlashdata('success', 'Your category has been created');
 
-		if ($this->form_validation->run() === FALSE) {
-			$data['category'] = $this->category_model->get_category($id);
-			if (empty($data['category'])) {
-				show_404();
-			}
-			$footer_data['script'] = null;
-			$this->load->view('templates/admin_header');
-			$this->load->view('admin/categories/update', $data);
-			$this->load->view('templates/admin_footer',	$footer_data);
-		} else {
-			$this->category_model->update_category($id);
-
-			// Set message
-			$this->session->set_flashdata('success', 'Your category has been created');
-
-			redirect('categories/list');
-		}
+		return redirect()->route('categoryUpdateView', [$id]);
 	}
 
 	public function delete($id)
 	{
-		$this->user_model->check_login();
-		$this->category_model->delete_category($id);
-
+		$category = new Category();
+		$category->delete($id);
 		// Set message
-		$this->session->set_flashdata('category_deleted', 'Your category has been deleted');
+		session()->setFlashdata('category_deleted', 'Your category has been deleted');
 
-		redirect('categories/list');
+		return	redirect('categoryList');
 	}
 }

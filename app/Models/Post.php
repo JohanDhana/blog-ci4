@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use CodeIgniter\Database\Query;
 use CodeIgniter\Model;
 
 class Post extends Model
@@ -61,35 +62,21 @@ class Post extends Model
 		  FROM post_categories pc 
 		  JOIN categories c ON pc.category_id = c.id
 		  WHERE c.slug = "' . $slug . '")  GROUP BY p.id');
-		return $query->getRow()[0]['count'];
+		return $query->getRow()->count;
 	}
 
-	public function count_posts_searched()
+	public function count_posts_searched($query)
 	{
 		$builder  = $this->db->table('posts');
-
-		$query = $this->input->get('search_query');
-
 		$builder->orLike('title', $query);
 		$builder->orLike('body', $query);
 		return	$builder->countAllResults();
 	}
 
-
-
-
-	public function search_posts($limit = FALSE, $offset = FALSE)
+	public function search_posts($query, $limit = 20, $offset = 0)
 	{
-		$builder  = $this->db->table('posts');
-
-		$query = $this->input->get('search_query');
-		if ($limit) {
-			$builder->limit($limit, $offset);
-		}
-		$builder->orLike('title', $query);
-		$builder->orLike('body', $query);
-		$query = $builder->get('posts');
-		return $query->getResultArray();
+		$postModel = new Post();
+		return $postModel->select('*')->orLike('title', $query)->orLike('body', $query)->paginate(20, 'group1');
 	}
 
 	public function create_post($icon, $image,	$categories)

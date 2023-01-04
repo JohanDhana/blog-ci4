@@ -7,11 +7,11 @@
                         <h3 class="card-title">Update Category</h3>
                     </div>
                     <div class="card-body">
-                        <?php echo form_open_multipart('categories/update/' . $category->id); ?>
+                        <?php echo form_open_multipart('categories/update/' . $category['id']); ?>
                         <div class="form-group mb-3 ">
                             <label class="form-label">Category title</label>
                             <div>
-                                <input type="text" class="form-control" name="name" placeholder="Enter title" value="<?= $category->name ?>">
+                                <input type="text" class="form-control" name="name" placeholder="Enter title" value="<?= $category['name'] ?>">
                             </div>
                         </div>
                         <div class="form-group mb-3 ">

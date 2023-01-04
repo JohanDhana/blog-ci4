@@ -62,11 +62,9 @@
                             </tbody>
                         </table>
                     </div>
-                    <?php if ($links) { ?>
+                    <?php if ($pager) { ?>
                         <div class="card-footer d-flex align-items-center">
-                            <p class="m-0 text-muted">Showing <span>
-                                    <?= (($page_nr - 1) * $limit) + 1  ?></span> to <span><?= (($page_nr  * $limit) < $total) ? $page_nr  * $limit : $total   ?></span> of <span><?= $total ?></span> entries</p>
-                            <?= $links ?>
+                            <?= $pager->links('group1') ?>
                         </div>
                     <?php } ?>
                 </div>

@@ -7,7 +7,7 @@
 						<h3 class="card-title">Create Category</h3>
 					</div>
 					<div class="card-body">
-						<?php echo form_open_multipart('categories/create'); ?>
+						<?= form_open_multipart('categories/create'); ?>
 						<div class="form-group mb-3 ">
 							<label class="form-label">Category title</label>
 							<div>
