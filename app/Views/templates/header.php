@@ -16,7 +16,6 @@
   <?php endforeach ?>
 
   <!-- Favicons -->
-  <link rel="icon" href="https://easyschema.com/Components/Assets/images/logo_ico.jpg" sizes="32x32" type="image/png" />
 
   <style>
     .bd-placeholder-img {
@@ -39,7 +38,6 @@
   <header class="navbar navbar-light sticky-top bg-white flex-md-nowrap pt-4 pb-0">
     <div class="container p-0">
       <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="<?php echo base_url(); ?>">
-        <img width="180" src="https://easyschema.com/Components/Assets/images/digitalgrown.svg" />
       </a>
       <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>

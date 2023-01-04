@@ -4,7 +4,7 @@
 <html>
 
 <head>
-    <title>EasySchema Dashboard</title>
+    <title>Dashboard</title>
     <!-- CSS files -->
     <link href="<?= base_url(); ?>/assets/css/tabler.min.css" rel="stylesheet" />
     <link href="<?= base_url(); ?>/assets/css/tabler-flags.min.css" rel="stylesheet" />
@@ -12,7 +12,6 @@
     <link href="<?= base_url(); ?>/assets/css/tabler-vendors.min.css" rel="stylesheet" />
     <link href="<?= base_url(); ?>/assets/css/demo.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
-    <link rel="icon" href="https://easyschema.com/Components/Assets/images/logo_ico.jpg" sizes="32x32" type="image/png" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.13.3/css/selectize.min.css" integrity="sha512-bkB9w//jjNUnYbUpATZQCJu2khobZXvLP5GZ8jhltg7P/dghIrTaSJ7B/zdlBUT0W/LXGZ7FfCIqNvXjWKqCYA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 
