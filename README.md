@@ -1,42 +1,64 @@
-# CodeIgniter 4 Application Starter
 
-## What is CodeIgniter?
+CodeIgniter 4 Blog Application 
+=====================================
+This project  for CodeIgniter 4 serves as a basic blog application. It is migrated from an old project in ci3 , includes possts creation and management, user management, roles, permissions and a dynamically-generated menu.
 
-CodeIgniter is a PHP full-stack web framework that is light, fast, flexible and secure.
-More information can be found at the [official site](https://codeigniter.com).
+Feature
+-------
+* CSS framework [Bootstrap 4 and 5](https://getbootstrap.com/)
+* Dynamically-Generated Menu
 
-This repository holds a composer-installable app starter.
-It has been built from the
-[development repository](https://github.com/codeigniter4/CodeIgniter4).
 
-More information about the plans for version 4 can be found in [CodeIgniter 4](https://forum.codeigniter.com/forumdisplay.php?fid=28) on the forums.
+Installation
+------------
 
-The user guide corresponding to the latest version of the framework can be found
-[here](https://codeigniter4.github.io/userguide/).
+```
 
-## Installation & updates
+**2.** Set CI_ENVIRONMENT, baseURL, index page, and database config in your `.env` file based on your existing database (If you don't have a `.env` file, you can copy first from `env` file: `cp env .env` first). If the database does not exist, create the database first.
 
-`composer create-project codeigniter4/appstarter` then `composer update` whenever
-there is a new release of the framework.
+```bash
+# .env file
+CI_ENVIRONMENT = development
 
-When updating, check the release notes to see if there are any changes you might need to apply
-to your `app` folder. The affected files can be copied or merged from
-`vendor/codeigniter4/framework/app`.
+app.baseURL = 'http://localhost:8080'
+app.indexPage = ''
 
-## Setup
+database.default.hostname = localhost
+database.default.database = ciblog
+database.default.username = root
+database.default.password =
+database.default.DBDriver = MySQLi
+```
 
-Copy `env` to `.env` and tailor for your app, specifically the baseURL
-and any database settings.
+**5.** Run development server:
 
-## Server Requirements
+```bash
+php spark serve
+```
 
-PHP version 7.4 or higher is required, with the following extensions installed:
+**6.** Open in browser http://localhost:8080/
+```bash
+Default user and password
++----+--------+-------------+
+| No | User   | Password    |
++----+--------+-------------+
+| 1  | john  | 1234        |
++----+--------+-------------+
+```
 
-- [intl](http://php.net/manual/en/intl.requirements.php)
-- [mbstring](http://php.net/manual/en/mbstring.installation.php)
 
-Additionally, make sure that the following extensions are enabled in your PHP:
 
-- json (enabled by default - don't turn it off)
-- [mysqlnd](http://php.net/manual/en/mysqlnd.install.php) if you plan to use MySQL
-- [libcurl](http://php.net/manual/en/curl.requirements.php) if you plan to use the HTTP\CURLRequest library
+Usage
+-----
+You can find how it works with the read code routes, controller and views etc. Finnally... Happy Coding!
+
+
+
+Contributing
+------------
+Contributions are very welcome.
+
+License
+-------
+
+This package is free software distributed under the terms of the [MIT license](LICENSE.md).
