@@ -101,7 +101,7 @@ class PostController extends BaseController
 		$data['seo_desc'] = '';
 		$data['tags'] = [];
 		$data['posts'] =  $post->get_posts_nested(10, 0);
-		$config["total_rows"] = $post->count_posts();
+		$config["total_rows"] = $post->countAllResults();
 		$offset = ($this->request->getVar('page')) ? (($this->request->getVar('page') - 1) * 20) : 0;
 		$data['page_nr'] = 	$this->request->getVar('page');
 		$data['posts_view'] = $post->select('*')->paginate();
