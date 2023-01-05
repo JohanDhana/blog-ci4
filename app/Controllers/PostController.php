@@ -10,7 +10,7 @@ class PostController extends BaseController
 
 	public function __construct()
 	{
-		helper('utils');
+		helper(['utils', 'form']);
 	}
 
 	public function index()
@@ -32,7 +32,7 @@ class PostController extends BaseController
 	{
 		$post = new Post();
 
-		$data['post'] = $post->get_posts_by_slug($slug);
+		$data['post'] = $post->where('slug', $slug)->first();
 		$data['posts'] = $post->get_posts_nested();
 		$data['tags'] = explode(',', $data['post']['tags'] || '');
 
@@ -53,13 +53,12 @@ class PostController extends BaseController
 	{
 		$post = new Post();
 
-		$config["base_url"] = base_url() . "posts/list";
-		$config["total_rows"] = $post->count_posts();
+		$total_rows = $post->countAllResults();
 		$offset = ($this->request->getVar('page')) ? (($this->request->getVar('page') - 1) * 20) : 0;
 		$data['limit'] = 20;
-		$data['total'] = $config['total_rows'];
+		$data['total'] = $total_rows;
 		$data['page_nr'] = 	$this->request->getVar('page');
-		$data['pages'] = $post->paginate(10, $offset);
+		$data['pages'] = $post->paginate(10);
 		$data['pager'] = $post->pager;
 
 		$footer_data['script'] = null;
@@ -135,111 +134,185 @@ class PostController extends BaseController
 			view('posts/list-view', $data) . view('templates/footer');
 	}
 
+	public function createView()
+	{
+		$category = new Category();
+		$post = new Post();
+		$data['categories'] = $category->findAll();
+		$data["posts"] = $post->findAll();
+		$data['title'] = 'Create Post';
+
+		$footer_data['script'] = null;
+		return		view('templates/admin_header') .
+			view('admin/create_post', $data) .
+			view('templates/admin_footer', $footer_data);
+	}
+
 	public function create()
 	{
+		$post = new Post();
+		// Upload Image
+		$post_icon = $this->upload_images('post_icon');
+		$post_image = $this->upload_images('post_image');
+		$categories = $this->request->getVar('categories');
 
-		$data['title'] = 'Create Post';
-		$data["posts"] = $post->get_posts();
+		$slug = url_title($this->request->getVar('title'), '-', TRUE);
+		$on_homepage = $this->request->getVar('on_homepage') === 'on' ? 1 : 0;
+		$slug_results =	$post->check_unique_slug(null, $slug);
+		$parent = empty($this->request->getVar('parent_id')) ? null : $this->request->getVar('parent_id');
+		if (count($slug_results->getResult()) === 0) {
+			$data = array(
+				'title' => $this->request->getVar('title'),
+				'slug' => $slug,
+				'on_homepage' => $on_homepage,
+				'tags' => $this->request->getVar('tags'),
+				'post_icon' => $post_icon,
+				'post_image' => $post_image,
+				'seo_title' => $this->request->getVar('seo_title'),
+				'seo_description' => $this->request->getVar('seo_description'),
+				'parent' => $parent,
+				'body' => $this->request->getVar('body'),
 
-		$data['categories'] = $post->get_categories();
+				// 'user_id' => $this->session->userdata('user_id'),
+			);
+			if ($this->request->getVar('seo_schema')) {
+				$data['seo_schema'] = $this->request->getVar('seo_schema');
+			}
 
-		$this->form_validation->set_rules('title', 'Title', 'required');
-		$this->form_validation->set_rules('body', 'Body', 'required');
+			$insrt = $post->insert($data);
+			$post_category = array();
+			foreach ($categories as $value) {
+				array_push($post_category, ['post_id' => $insrt, 'category_id' => $value]);
+			}
+			$db = db_connect();
+			$builderPC  = $db->table('post_categories');
 
-		if ($this->form_validation->run() === FALSE) {
-			$footer_data['script'] = null;
-			view('templates/admin_header');
-			view('admin/create_post', $data);
-			view('templates/admin_footer', $footer_data);
+			$builderPC->insertBatch($post_category);
 		} else {
-			// Upload Image
-			$post_icon = $this->upload_images('post_icon');
-			$post_image = $this->upload_images('post_image');
-			$categories = $this->input->post('categories');
-			$this->post_model->create_post($post_icon, $post_image,	$categories);
-			// Set message
-			$this->session->set_flashdata('post_created', 'Your post has been created');
+			session()->setFlashdata('bad_request', 'A page with this title already exist');
+			return redirect('posts/create');
+		}		// Set message
+		session()->setFlashdata('post_created', 'Your post has been created');
 
-			redirect('posts/list');
-		}
+		return redirect('postList');
 	}
 
 	public function delete($id)
 	{
-		$this->post_model->delete_post($id);
-
+		$post = new Post();
+		$image_file_name = $post->select('post_image')->getWhere(array('id' => $id))->getRow()->post_image;
+		$icon_file_name = $post->select('post_icon')->getWhere(array('id' => $id))->getRow()->post_icon;
+		$cwd = getcwd(); // save the current working directory
+		$image_file_path = $cwd . "\\assets\\images\\posts\\";
+		chdir($image_file_path);
+		unlink($image_file_name);
+		unlink($icon_file_name);
+		chdir($cwd); // Restore the previous working directory
+		$post->delete($id);
 		// Set message
-		$this->session->set_flashdata('post_deleted', 'Your post has been deleted');
+		session()->setFlashdata('post_deleted', 'Your post has been deleted');
 
-		redirect('posts/list');
+		return redirect('postList');
+	}
+
+
+	public function updateView(int $id)
+	{
+		$post = new Post();
+		$category = new Category();
+
+		$data['title'] = 'Update Post';
+		$data["posts"] = $post->findAll();
+		$data['posts'] = array_filter($data['posts'], fn ($el) => $el['id'] !== $id);
+		$data['page'] = $post->find($id);
+		$data['page']['is_parent'] = $post->get_posts_count_with_parent($id) > 0;
+
+		if (empty($data['page'])) {
+			throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+		}
+		$categories = $category->findAll();
+		$categories_of_post = $post->get_posts_by_id_with_categories($id);
+		$data['categories'] = [];
+		foreach ($categories as $category) {
+			$cat_temp = array('post_id' => $id, 'category_name' => $category['name'], 'category_id' => $category['id']);
+			$category['selected'] = in_array($cat_temp, $categories_of_post);
+			array_push($data['categories'], $category);
+		}
+		$footer_data['script'] = null;
+		return view('templates/admin_header') .
+			view('admin/update_post', $data) .
+			view('templates/admin_footer',	$footer_data);
 	}
 
 	public function update($id)
 	{
-		// Check login
+		$post = new Post();
+		// Upload Image
 
-		$data['title'] = 'Update Post';
-		$data["posts"] = $post->get_posts();
-		$data['posts'] = array_filter($data['posts'], fn ($el) => $el['id'] !== $id);
-		$this->form_validation->set_rules('title', 'Title', 'required');
-		$this->form_validation->set_rules('body', 'Body', 'required');
+		$post_icon = $this->upload_images('post_icon');
+		$post_image = $this->upload_images('post_image');
+		$categories = $this->request->getVar('categories');
+		$on_homepage = $this->request->getVar('on_homepage') === 'on' ? 1 : 0;
+		$parent = empty($this->request->getVar('parent_id')) ? null : $this->request->getVar('parent_id');
 
-		if ($this->form_validation->run() === FALSE) {
-			$data['page'] = $post->get_posts_by_id($id);
-			$data['page']['is_parent'] = $post->get_posts_count_with_parent($id) > 0;
+		$data = array(
+			'title' => $this->request->getVar('title'),
+			'body' => $this->request->getVar('body'),
+			'seo_title' => $this->request->getVar('seo_title'),
+			'seo_description' => $this->request->getVar('seo_description'),
+			'parent' => $parent,
+			'tags' => $this->request->getVar('tags'),
+			'on_homepage' => $on_homepage,
+		);
 
-			if (empty($data['page'])) {
-				show_404();
-			}
-			$categories = $post->get_categories();
-			$categories_of_post = $post->get_posts_by_id_with_categories($id);
-			$data['categories'] = [];
-			foreach ($categories as $category) {
-				$cat_temp = array('post_id' => $id, 'category_name' => $category['name'], 'category_id' => $category['id']);
-				$selected = in_array($cat_temp, $categories_of_post) ? true : false;
-				$category['selected'] = $selected;
-				array_push($data['categories'], $category);
-			}
-			$footer_data['script'] = null;
-			view('templates/admin_header');
-			view('admin/update_post', $data);
-			view('templates/admin_footer',	$footer_data);
-		} else {
-
-			// Upload Image
-
-			$post_icon = $this->upload_images('post_icon');
-			$post_image = $this->upload_images('post_image');
-			$categories = $this->input->post('categories');
-
-			$this->post_model->update_post($id, $post_icon, $post_image, $categories);
-			$this->session->set_flashdata('success', 'Your post has been updated');
-
-			header("Refresh:0");
+		if ($this->request->getVar('seo_schema')) {
+			$data['seo_schema'] = $this->request->getVar('seo_schema');
 		}
+
+		if ($post_icon) {
+			$data['post_icon'] = $post_icon;
+		}
+		if ($post_image) {
+			$data['post_image'] = $post_image;
+		}
+
+		$post->update($id, $data);
+
+		$db = db_connect();
+
+		$builderPC  = $db->table('post_categories');
+
+		$builderPC->delete(['post_id' => $id]);
+		if ($categories) {
+			$post_category = array();
+			foreach ($categories as $category_id) {
+				array_push($post_category, array('post_id' => $id, 'category_id' => $category_id));
+			}
+			$builderPC->insertBatch($post_category);
+		}
+
+		session()->setFlashdata('success', 'Your post has been updated');
+
+		return	header("Refresh:0");
 	}
 
 
 
 	function upload_images($image)
 	{
-		if ($_FILES[$image]['type']) {
-			$file = explode("/", $_FILES[$image]['type']);
-			$ext = explode('+', '.' . end($file))[0];
-			$config = get_file_upload_config('post-img' . time() . $ext);
-
-			$this->load->library('upload', $config);
-
-			if (!$this->upload->do_upload($image)) {
-				$errors = array('error' => $this->upload->display_errors());
-				$this->session->set_flashdata('bad_request', 'Your image was not uploaded!');
-				return null;
+		$img = $this->request->getFile($image);
+		if ($img->isValid()) {
+			if (!$img->hasMoved()) {
+				$img->move(ROOTPATH . 'public/assets/uploads/posts');
+				$imgData = [
+					'name' =>  $img->getName(),
+					'type'  => $img->getClientMimeType()
+				];
+				return $imgData['name'];
 			} else {
-				$data =  $this->upload->data();
-				return  $data['file_name'];
+				$imgData = ['errors' => 'The file has already been moved.'];
+				return	header("Refresh:0");
 			}
-		} else {
-			return null;
 		}
 	}
 }

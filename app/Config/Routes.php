@@ -36,8 +36,12 @@ $routes->set404Override();
 // We get a performance increase by specifying the default
 // route since we don't have to scan directories.
 $routes->get('/', 'PostController::index');
-$routes->get('posts/create', 'PostController::create');
-$routes->get('posts/list', 'PostController::list',);
+$routes->post('posts/create', 'PostController::create');
+$routes->get('posts/create', 'PostController::createView');
+$routes->get('posts/list', 'PostController::list', ['as' => 'postList']);
+$routes->get('posts/delete/(:num)', 'PostController::delete/$1', ['as' => 'postDelete']);
+$routes->post('posts/update/(:segment)', 'PostController::update/$1');
+$routes->get('posts/update/(:segment)', 'PostController::updateView/$1');
 $routes->get('posts/search', 'PostController::public_post_search');
 $routes->get('post/(:segment)', 'PostController::view/$1');
 $routes->get('posts', 'PostController::public_post_list');

@@ -20,7 +20,7 @@
                                 <input type="file" class="form-control" accept="image/png, image/svg, image/jpeg" name="post_icon" id="post_icon" placeholder="Enter title">
                             </div>
                             <?php if ($page['post_icon']) {
-                                echo '<img src="' . base_url('assets/images/posts/' . $page['post_icon']) . '" width="75px" class="pt-3">';
+                                echo '<img src="' . base_url('assets/uploads/posts/' . $page['post_icon']) . '" width="75px" class="pt-3">';
                             } ?>
                         </div>
 
@@ -30,7 +30,7 @@
                                 <input type="file" class="form-control" accept="image/png, image/svg, image/jpeg" name="post_image" id="post_image" placeholder="Enter title">
                             </div>
                             <?php if ($page['post_image']) {
-                                echo '<img src="' . base_url('assets/images/posts/' . $page['post_image']) . '" width="75px" class="pt-3">';
+                                echo '<img src="' . base_url('assets/uploads/posts/' . $page['post_image']) . '" width="75px" class="pt-3">';
                             } ?>
                         </div>
 
@@ -86,7 +86,7 @@
                         </div>
                         <div class="form-group mb-3 ">
                             <label class="form-label">Page content</label>
-                            <textarea id="summernote" name="body"><?= html_escape($page['body'])  ?></textarea>
+                            <textarea id="summernote" name="body"><?= esc($page['body'])  ?></textarea>
                         </div>
 
                         <div class="form-group mb-3">

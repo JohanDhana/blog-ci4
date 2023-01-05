@@ -16,7 +16,7 @@ class Post extends Model
 	protected $returnType       = 'array';
 	protected $useSoftDeletes   = false;
 	protected $protectFields    = true;
-	protected $allowedFields    = ['title', 'slug', 'image', 'content', 'seo_title', 'seo_description',];
+	protected $allowedFields    = ['title', 'slug', 'post_image', 'post_icon', 'body', 'seo_title', 'seo_description', 'on_homepage', 'parent'];
 
 	// Dates
 	protected $useTimestamps = false;
@@ -26,7 +26,7 @@ class Post extends Model
 	protected $deletedField  = 'deleted_at';
 
 	// Validation
-	protected $validationRules      =    ['title' => 'required', 'content' => 'required',];
+	protected $validationRules      =    ['title' => 'required', 'body ' => 'required',];
 	protected $validationMessages   = [];
 	protected $skipValidation       = false;
 	protected $cleanValidationRules = true;
@@ -43,16 +43,8 @@ class Post extends Model
 	protected $afterDelete    = [];
 
 
-	public function count_posts()
-	{
-		$builder  = $this->db->table('posts');
-		return	$builder->countAllResults();
-	}
-
 	public function count_posts_by_category($slug)
 	{
-
-
 		$query = $this->db->query('SELECT count(*) as count
 		FROM posts p
 		JOIN post_categories pc ON p.id = pc.post_id
@@ -79,114 +71,9 @@ class Post extends Model
 		return $postModel->select('*')->orLike('title', $query)->orLike('body', $query)->paginate(20, 'group1');
 	}
 
-	public function create_post($icon, $image,	$categories)
-	{
-		$builder  = $this->db->table('posts');
 
-		$slug = url_title($this->input->post('title'), '-', TRUE);
-		$on_homepage = $this->input->post('on_homepage') === 'on' ? 1 : 0;
-		$slug_results =	$this->check_unique_slug(null, $slug);
-		$parent = empty($this->input->post('parent_id')) ? null : $this->input->post('parent_id');
-		if ($slug_results === 0) {
-			$data = array(
-				'title' => $this->input->post('title'),
-				'slug' => $slug,
-				'on_homepage' => $on_homepage,
-				'tags' => $this->input->post('tags'),
-				'post_icon' => $icon,
-				'post_image' => $image,
-				'seo_title' => $this->input->post('seo_title'),
-				'seo_description' => $this->input->post('seo_description'),
-				'parent' => $parent,
-				'body' => $this->input->post('body'),
 
-				// 'user_id' => $this->session->userdata('user_id'),
-			);
-			if ($this->input->post('seo_schema')) {
-				$data['seo_schema'] = $this->input->post('seo_schema');
-			}
 
-			$insrt = $builder->insert($data);
-			$post_id = $this->get_posts_by_slug($slug)['id'];
-			$post_category = array();
-			foreach ($categories as $value) {
-				array_push($post_category, ['post_id' => $post_id, 'category_id' => $value]);
-			}
-			$builderPC  = $this->db->table('post_categories');
-
-			$builderPC->insertBatch($post_category);
-			return $insrt;
-		} else {
-			$this->session->set_flashdata('bad_request', 'A page with this title already exist');
-		}
-	}
-
-	public function delete_post($id)
-	{
-		$builder  = $this->db->table('posts');
-
-		$image_file_name = $builder->select('post_image')->getWhere(array('id' => $id))->getRow()->post_image;
-		$icon_file_name = $builder->select('post_icon')->getWhere(array('id' => $id))->getRow()->post_icon;
-		$cwd = getcwd(); // save the current working directory
-		$image_file_path = $cwd . "\\assets\\images\\posts\\";
-		chdir($image_file_path);
-		unlink($image_file_name);
-		unlink($icon_file_name);
-		chdir($cwd); // Restore the previous working directory
-		$builder->where('id', $id);
-		$builder->delete('posts');
-		return true;
-	}
-
-	public function update_post($id, $post_icon, $image, $categories)
-	{
-		$on_homepage = $this->input->post('on_homepage') === 'on' ? 1 : 0;
-		$parent = empty($this->input->post('parent_id')) ? null : $this->input->post('parent_id');
-
-		$data = array(
-			'title' => $this->input->post('title'),
-			'body' => $this->input->post('body'),
-			'seo_title' => $this->input->post('seo_title'),
-			'seo_description' => $this->input->post('seo_description'),
-			'parent' => $parent,
-			'tags' => $this->input->post('tags'),
-			'on_homepage' => $on_homepage,
-		);
-
-		if ($this->input->post('seo_schema')) {
-			$data['seo_schema'] = $this->input->post('seo_schema');
-		}
-
-		if ($post_icon) {
-			$data['post_icon'] = $post_icon;
-		}
-		if ($image) {
-			$data['post_image'] = $image;
-		}
-
-		$builder  = $this->db->table('posts');
-		$update = $builder->update($data, ['id' => $id]);
-		$builderPC  = $this->db->table('post_categories');
-
-		$builderPC->delete(['post_id' => $id]);
-		if ($categories) {
-			$post_category = array();
-			foreach ($categories as $category_id) {
-				array_push($post_category, array('post_id' => $id, 'category_id' => $category_id));
-			}
-			$builderPC->insertBatch($post_category);
-		}
-
-		return $update;
-	}
-
-	public function get_categories()
-	{
-		$builder  = $this->db->table('posts');
-		$builder->orderBy('name');
-		$query = $builder->get('categories');
-		return $query->resultArray;
-	}
 
 	public function posts_by_category($category_slug)
 	{
@@ -210,15 +97,7 @@ class Post extends Model
 		$query = $this->db->query('SELECT pc.post_id AS `post_id`, c.name AS `category_name`,c.id as `category_id` 
 		FROM post_categories AS pc
 		INNER JOIN categories  AS c ON pc.category_id = c.id where pc.post_id=' . $id);
-		return $query->resultArray;
-	}
-
-
-	public function get_posts_by_slug($slug)
-	{
-		$builder  = $this->db->table('posts');
-		$query = $builder->getWhere(array('slug' => $slug));
-		return $query->getRowArray();
+		return $query->getResultArray();
 	}
 
 	function check_unique_slug($id, $slug)
@@ -230,7 +109,7 @@ class Post extends Model
 		if ($id) {
 			$builder->whereNotIn('id', $id);
 		}
-		return $builder->get('posts');
+		return $builder->get();
 	}
 
 
@@ -238,7 +117,6 @@ class Post extends Model
 	{
 		$builder  = $this->db->table('posts');
 		$builder->where('parent', $parent_id);
-		$builder->from('posts');
 		return $builder->countAllResults();
 	}
 

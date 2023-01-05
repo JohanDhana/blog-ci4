@@ -64,7 +64,7 @@
                     </div>
                     <?php if ($pager) : ?>
                         <div class="card-footer d-flex align-items-center">
-                            <?= $pager->links('group1') ?>
+                            <?= $pager->links() ?>
                         </div>
                     <?php endif; ?>
                 </div>
