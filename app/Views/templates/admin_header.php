@@ -112,8 +112,8 @@
                             </div>
                         </a>
                         <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-                            <a href="<?= base_url('users/reset-password') ?>" class="dropdown-item">Reset Password</a>
-                            <a href="<?= base_url('users/logout') ?>" class="dropdown-item">Logout</a>
+                            <a href="<?= base_url('reset-password') ?>" class="dropdown-item">Reset Password</a>
+                            <a href="<?= base_url('logout') ?>" class="dropdown-item">Logout</a>
                         </div>
                     </div>
                 </div>

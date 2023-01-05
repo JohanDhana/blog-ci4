@@ -6,11 +6,11 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Password Reset</title>
     <!-- CSS files -->
-    <link href="<?php echo base_url(); ?>assets/css/tabler.min.css" rel="stylesheet">
-    <link href="<?php echo base_url(); ?>assets/css/tabler-flags.min.css" rel="stylesheet">
-    <link href="<?php echo base_url(); ?>assets/css/tabler-payments.min.css" rel="stylesheet">
-    <link href="<?php echo base_url(); ?>assets/css/tabler-vendors.min.css" rel="stylesheet">
-    <link href="<?php echo base_url(); ?>assets/css/demo.min.css" rel="stylesheet">
+    <link href="<?= base_url(); ?>/assets/css/tabler.min.css" rel="stylesheet">
+    <link href="<?= base_url(); ?>/assets/css/tabler-flags.min.css" rel="stylesheet">
+    <link href="<?= base_url(); ?>/assets/css/tabler-payments.min.css" rel="stylesheet">
+    <link href="<?= base_url(); ?>/assets/css/tabler-vendors.min.css" rel="stylesheet">
+    <link href="<?= base_url(); ?>/assets/css/demo.min.css" rel="stylesheet">
 </head>
 
 <body class="antialiased border-top-wide border-primary d-flex flex-column">
@@ -28,13 +28,6 @@
             <div class="alert alert-danger" role="alert">
                 <h4 class="alert-title">Error</h4>
                 <div class="text-muted"><?= $this->session->flashdata('bad_request') ?></div>
-            </div>
-        <?php endif; ?>
-
-        <?php if (validation_errors()) : ?>
-            <div class="alert alert-danger" role="alert">
-                <h4 class="alert-title">Error</h4>
-                <div class="text-muted"><?= validation_errors() ?></div>
             </div>
         <?php endif; ?>
         <!-- Flash messages -->

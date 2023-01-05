@@ -1,4 +1,5 @@
 <html lang="en">
+<?php $session = \Config\Services::session(); ?>
 
 <head>
 	<meta charset="utf-8">
@@ -6,37 +7,31 @@
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
 	<title>Sign in</title>
 	<!-- CSS files -->
-	<link href="<?php echo base_url(); ?>assets/css/tabler.min.css" rel="stylesheet">
-	<link href="<?php echo base_url(); ?>assets/css/tabler-flags.min.css" rel="stylesheet">
-	<link href="<?php echo base_url(); ?>assets/css/tabler-payments.min.css" rel="stylesheet">
-	<link href="<?php echo base_url(); ?>assets/css/tabler-vendors.min.css" rel="stylesheet">
-	<link href="<?php echo base_url(); ?>assets/css/demo.min.css" rel="stylesheet">
+	<link href="<?= base_url(); ?>/assets/css/tabler.min.css" rel="stylesheet">
+	<link href="<?= base_url(); ?>/assets/css/tabler-flags.min.css" rel="stylesheet">
+	<link href="<?= base_url(); ?>/assets/css/tabler-payments.min.css" rel="stylesheet">
+	<link href="<?= base_url(); ?>/assets/css/tabler-vendors.min.css" rel="stylesheet">
+	<link href="<?= base_url(); ?>/assets/css/demo.min.css" rel="stylesheet">
 </head>
 
 <body class="antialiased border-top-wide border-primary d-flex flex-column">
 
 	<div class="container-xl pt-2">
 		<!-- Flash messages -->
-		<?php if ($this->session->flashdata('success')) : ?>
+		<?php if ($session->getFlashdata('success')) : ?>
 			<div class="alert alert-success" role="alert">
 				<h4 class="alert-title">Wow! Everything worked!</h4>
-				<div class="text-muted"><?= $this->session->flashdata('success') ?></div>
+				<div class="text-muted"><?= $session->getFlashdata('success') ?></div>
 			</div>
 		<?php endif; ?>
 
-		<?php if ($this->session->flashdata('bad_request')) : ?>
+		<?php if ($session->getFlashdata('bad_request')) : ?>
 			<div class="alert alert-danger" role="alert">
 				<h4 class="alert-title">Error</h4>
-				<div class="text-muted"><?= $this->session->flashdata('bad_request') ?></div>
+				<div class="text-muted"><?= $session->getFlashdata('bad_request') ?></div>
 			</div>
 		<?php endif; ?>
 
-		<?php if (validation_errors()) : ?>
-			<div class="alert alert-danger" role="alert">
-				<h4 class="alert-title">Error</h4>
-				<div class="text-muted"><?= validation_errors() ?></div>
-			</div>
-		<?php endif; ?>
 		<!-- Flash messages -->
 	</div>
 
@@ -45,8 +40,7 @@
 			<div class="text-center mb-4">
 				<a href="."><img src="./static/logo.svg" height="36" alt=""></a>
 			</div>
-			<form class="card card-md" action="<?= base_url('users/login') ?>" method="POST">
-				<?= form_hidden('redirect_url', $old_url); ?>
+			<form class="card card-md" action="<?= base_url('login') ?>" method="POST">
 				<div class="card-body">
 					<h2 class="card-title text-center mb-4">Login to your account</h2>
 					<div class="mb-3">
@@ -80,7 +74,7 @@
 	</div>
 	<!-- Libs JS -->
 	<!-- Tabler Core -->
-	<script src="<?php echo base_url(); ?>assets/js/tabler.min.js"></script>
+	<script src="<?= base_url(); ?>/assets/js/tabler.min.js"></script>
 	<script>
 		var password = document.getElementsByName('password')[0]
 		document.getElementById('passwordToggle').addEventListener('click', (evt) => {

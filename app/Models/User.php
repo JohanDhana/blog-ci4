@@ -1,74 +1,42 @@
 <?php
-namespace App\Models; 
+
+namespace App\Models;
 
 use CodeIgniter\Model;
- 
+
 class User extends Model
 {
-	public function register($enc_password)
-	{
-		// User data array
-		$data = array(
-			'name' => $this->input->post('name'),
-			'email' => $this->input->post('email'),
-			'username' => $this->input->post('username'),
-			'password' => $enc_password,
-			'zipcode' => $this->input->post('zipcode')
-		);
+	protected $DBGroup          = 'default';
+	protected $table            = 'users';
+	protected $primaryKey       = 'id';
+	protected $useAutoIncrement = true;
+	protected $insertID         = 0;
+	protected $returnType       = 'array';
+	protected $useSoftDeletes   = false;
+	protected $protectFields    = true;
+	protected $allowedFields    = ['name', 'email', 'password'];
 
-		// Insert user
-		return $this->db->insert('users', $data);
-	}
+	// Dates
+	protected $useTimestamps = false;
+	protected $dateFormat    = 'datetime';
+	protected $createdField  = 'created_at';
+	protected $updatedField  = 'updated_at';
+	protected $deletedField  = 'deleted_at';
 
-	// Log user in
-	public function login($username, $password)
-	{
-		// Validate
-		$this->db->where('username', $username);
-		$this->db->where('password', $password);
+	// Validation
+	protected $validationRules      = [];
+	protected $validationMessages   = [];
+	protected $skipValidation       = false;
+	protected $cleanValidationRules = true;
 
-		$result = $this->db->get('users');
-
-		if ($result->num_rows() == 1) {
-			return $result->row(0)->id;
-		} else {
-			return false;
-		}
-	}
-
-	public function reset_password($username, $password)
-	{
-		$this->db->update('users', ['password' => $password]);
-	}
-
-
-	// Check username exists
-	public function check_username_exists($username)
-	{
-		$query = $this->db->get_where('users', array('username' => $username));
-		if (empty($query->row_array())) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	// Check email exists
-	public function check_email_exists($email)
-	{
-		$query = $this->db->get_where('users', array('email' => $email));
-		if (empty($query->row_array())) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	public  function check_login()
-	{
-		if (!$this->session->userdata('logged_in')) {
-			$return_url = urlencode($this->uri->uri_string());
-			redirect('users/login?return_url=' . $return_url);
-		}
-	}
+	// Callbacks
+	protected $allowCallbacks = true;
+	protected $beforeInsert   = [];
+	protected $afterInsert    = [];
+	protected $beforeUpdate   = [];
+	protected $afterUpdate    = [];
+	protected $beforeFind     = [];
+	protected $afterFind      = [];
+	protected $beforeDelete   = [];
+	protected $afterDelete    = [];
 }

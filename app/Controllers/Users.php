@@ -1,150 +1,146 @@
 <?php
+
 namespace App\Controllers;
+
+use App\Controllers\BaseController;
+use App\Models\User;
+use CodeIgniter\API\ResponseTrait;
+
 class Users extends BaseController
 {
-	// Register user
-	public function register()
+	use ResponseTrait;
+
+	private User $user;
+	public $staticPages;
+	private $session;
+	/**
+	 * constructor
+	 */
+	public function __construct()
 	{
-		$data['title'] = 'Sign Up';
-
-		$this->form_validation->set_rules('name', 'Name', 'required');
-		$this->form_validation->set_rules('username', 'Username', 'required|callback_check_username_exists');
-		$this->form_validation->set_rules('email', 'Email', 'required|callback_check_email_exists');
-		$this->form_validation->set_rules('password', 'Password', 'required');
-		$this->form_validation->set_rules('password2', 'Confirm Password', 'matches[password]');
-
-		if ($this->form_validation->run() === FALSE) {
-			// $this->load->view('templates/header');
-			$this->load->view('users/register', $data);
-			// $this->load->view('templates/footer');
-		} else {
-			// Encrypt password
-			$enc_password =  hash('sha256', $this->input->post('password'));
-
-			$this->user_model->register($enc_password);
-
-			// Set message
-			$this->session->set_flashdata('user_registered', 'You are now registered and can log in');
-
-			redirect('posts');
-		}
+		helper(['form', 'url', 'session']);
+		$this->user = new User();
+		$this->session = session();
 	}
 
-	// Log in user
-	public function login()
+	/**
+	 * register
+	 */
+	public function register($validators = [])
 	{
-		$data['title'] = 'Sign In';
-		$this->form_validation->set_rules('username', 'Username', 'required');
-		$this->form_validation->set_rules('password', 'Password', 'required');
-		$data['old_url'] = urldecode($this->input->get('return_url', TRUE));
+		if ($this->session->get('loggedIn')) return redirect('postList');
+		$data['staticPages'] = $this->staticPages;
+		$data['validators'] = $validators;
+		return view('templates/header')
+			. view('register', $data)
+			. view('templates/footer');
+	}
 
-		if ($this->form_validation->run() === FALSE) {
-			$this->load->view('users/login', $data);
-		} else {
+	/**
+	 * register
+	 */
+	public function create()
+	{
+		$this->enforcePost();
 
-			// Get username
-			$username = $this->input->post('username');
-			// Get and encrypt the password
-			$password =  hash('sha256', $this->input->post('password'));
+		$inputs = $this->validate([
+			'name' => 'required|min_length[5]',
+			'email' => 'required|valid_email|is_unique[users.email]',
+			'password' => 'required|min_length[5]'
+		]);
 
+		if (!$inputs) {
+			return $this->register([
+				'validation' => $this->validator
+			]);
+		}
 
-			// Login user
-			$user_id = $this->user_model->login($username, $password);
+		$this->user->save([
+			'name' => $this->request->getVar('name'),
+			'email'  => $this->request->getVar('email'),
+			'password'  => password_hash($this->request->getVar('password'), PASSWORD_DEFAULT)
+		]);
+		session()->setFlashdata('success', 'Success! registration completed.');
+		return redirect()->to(site_url('/register'));
+	}
 
-			if ($user_id) {
-				// Create session
-				$user_data = array(
-					'user_id' => $user_id,
-					'username' => $username,
-					'logged_in' => true
-				);
+	/**
+	 * login form
+	 */
+	public function login($validators = [])
+	{
+		if ($this->session->get('loggedIn')) return redirect('postList');
+		$data['returnUrl'] = $this->request->getVar('return_url');
+		$data['seo_title'] = 'Login';
+		$data['validators'] = $validators;
+		return view('users/login', $data)
+			. view('templates/footer');
+	}
 
-				$this->session->set_userdata($user_data);
+	/**
+	 * login validate
+	 */
+	public function loginValidate()
+	{
+		$this->enforcePost();
 
-				// Set message
-				$this->session->set_flashdata('success', 'You are now logged in');
-				if ($this->input->post('redirect_url')) {
-					redirect($this->input->post('redirect_url'));
-				} else {
-					redirect('posts/list');
-				}
-			} else {
-				// Set message
-				$this->session->set_flashdata('bad_request', 'Login is invalid');
+		$inputs = $this->validate([
+			'username' => 'required',
+			'password' => 'required|min_length[4]'
+		]);
 
-				redirect('users/login');
+		if (!$inputs) {
+			return $this->login([
+				'validation' => $this->validator
+			]);
+		}
+
+		$username = $this->request->getVar('username');
+		$password = $this->request->getVar('password');
+
+		$user = $this->user->where('username', $username)->first();
+		$returnUrl = $this->request->getVar('return_url');
+		if ($user) {
+
+			$pass = $user['password'];
+			$authPassword = password_verify($password, $pass);
+
+			if ($authPassword) {
+				$sessionData = [
+					'id' => $user['id'],
+					'username' => $user['username'],
+					'loggedIn' => true,
+				];
+
+				$this->session->set($sessionData);
+				if ($returnUrl)
+					return redirect()->to($returnUrl);
+
+				return redirect('postList');
 			}
+
+			session()->setFlashdata('failed', 'Failed! incorrect password');
+			return redirect()->to(site_url('/login'));
 		}
+
+		session()->setFlashdata('failed', 'Failed! incorrect email');
+		return redirect()->to(site_url('/login'));
 	}
 
-	// Log user out
+	/**
+	 * User logout
+	 * @param NA
+	 */
 	public function logout()
 	{
-		// Unset user data
-		session_destroy();
-
-
-		// Set message
-		$this->session->set_flashdata('success', 'You are now logged out');
-
-		redirect('users/login');
+		session()->destroy();
+		return redirect()->to('login');
 	}
 
-	function reset_password()
+	private function enforcePost()
 	{
-		if (!$this->session->userdata('logged_in')) {
-			redirect('users/login');
-		}
-		$data['title'] = 'Reset Password';
-		$this->form_validation->set_rules('password', 'Password', 'required');
-		$this->form_validation->set_rules('new_password', 'New Password', 'required');
-
-		if ($this->form_validation->run() === FALSE) {
-			$this->load->view('users/reset_password', $data);
-		} else {
-			// Get username
-			$username = $this->session->userdata('username');
-
-			// Get and encrypt the password
-			$password = hash('sha256', $this->input->post('password'));
-
-			$new_password = hash('sha256', $this->input->post('new_password'));
-
-			// Login user
-			$user = $this->user_model->login($username, $password);
-			$user_id = $user['id'];
-			$this->user_model->reset_password($username, $new_password);
-			if ($user_id) {
-				$this->session->set_flashdata('success', 'Password reset');
-				redirect('posts/list');
-			} else {
-				// Set message
-				$this->session->set_flashdata('bad_request', 'Credentials are invalid');
-				redirect('users/reset-password');
-			}
-		}
-	}
-
-
-	// Check if username exists
-	public function check_username_exists($username)
-	{
-		$this->form_validation->set_message('bad_request', 'That username is taken. Please choose a different one');
-		if ($this->user_model->check_username_exists($username)) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	// Check if email exists
-	public function check_email_exists($email)
-	{
-		$this->form_validation->set_message('bad_request', 'That email is taken. Please choose a different one');
-		if ($this->user_model->check_email_exists($email)) {
-			return true;
-		} else {
-			return false;
+		if (strtolower($_SERVER['REQUEST_METHOD']) !== 'post') {
+			return $this->response->setStatusCode(405)->setBody('Method Not Allowed');
 		}
 	}
 }
