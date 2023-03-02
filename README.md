@@ -50,7 +50,7 @@ Default user and password
 
 Usage
 -----
-You can find how it works with the read code routes, controller and views etc. Finnally... Happy Coding!
+You can find how it works with the read code routes, controller and views etc.
 
 
 
