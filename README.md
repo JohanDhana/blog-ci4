@@ -1,7 +1,7 @@
 
 CodeIgniter 4 Blog Application 
 =====================================
-This project  for CodeIgniter 4 serves as a basic blog application. It is migrated from an old project in ci3 , includes possts creation and management, user management, roles, permissions and a dynamically-generated menu.
+This project  for CodeIgniter 4 serves as a basic blog application. It is migrated from an old project in ci3 , includes blog post creation and management, user management, roles, permissions and a dynamically-generated menu.
 
 Feature
 -------
